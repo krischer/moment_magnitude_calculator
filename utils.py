@@ -12,8 +12,11 @@ Utility functions and classes.
 from PyQt4 import QtCore, QtGui, QtWebKit
 
 import glob
-from obspy.core import UTCDateTime
+import math
+import numpy as np
+from obspy.core import Stream, Trace, UTCDateTime
 import os
+import scipy.optimize
 
 
 class GoogleMapsWebView(QtWebKit.QWebPage):
@@ -62,6 +65,43 @@ def center_Qt_window(window):
         (resolution.height() / 2) - (window.frameSize().height() / 2))
 
 
+def lat_long_to_distance(lat1, lng1, depth1, lat2, lng2, depth2):
+    """
+    Calculates the distance in km between two points in lat/lng/depth. Only
+    works for small distances as it simply converts to a x, y, z coordinate
+    system.
+
+    Dephts are in kilometer.
+    """
+    # Some constants. From wikipedia
+    # (http://en.wikipedia.org/wiki/Longitude#Length_of_a_degree_of_longitude)
+    a = 6378.1370
+    b = 6356.7523142
+    # Ellicpticity
+    e = (a ** 2 - b ** 2) / (a ** 2)
+
+    lats = [lat2, lat1]
+    lats.sort()
+    lngs = [lng2, lng1]
+    lngs.sort()
+    lat = lats[1] - lats[0]
+    lng = lngs[1] - lngs[0]
+    if lat > 180:
+        lat = 360 - lat
+    if lng > 180:
+        lng = 360 - lng
+    depth = abs(depth2 - depth1)
+    # Just choose the first latitude for the longitude calculation.
+    one_degree_lng = (math.pi * a * math.cos(math.radians(lat1))) / \
+        (180.0 * (1.0 - e ** 2 * (math.sin(lat1 ** 2) ** 0.5)))
+
+    # Now calculate the distance as a simple euclidean distance.
+    # XXX: Approximate value. Calculate one.
+    lat = 111.132 * lat
+    lng = one_degree_lng * lng
+    return math.sqrt((lat) ** 2 + (lng) ** 2 + (depth) ** 2)
+
+
 def compile_ui_files(ui_directory, destination_directory):
     """
     Automatically compiles all .ui files found in the given ui_directory to .py
@@ -82,3 +122,150 @@ def compile_ui_files(ui_directory, destination_directory):
             print "Compiling ui file: %s" % ui_file
             with open(py_ui_file, 'w') as open_file:
                 uic.compileUi(ui_file, open_file)
+
+
+def brune_source(duration, sampling_rate=200, variation_signal=0.625,
+    stress_drop=50.0, shear_module=3.0E10, v_s=3.5, depth=20, distance=1):
+    """
+    Calculate a theoretical source after (Brune, 1970) as has been done in the
+    PITSA source code.
+
+    :param duration: How long the resulting signal should in [s].
+    :param npts: Number of sample points of the resulting signal
+    :param variation signal: The radiation pattern of the source.
+    :param stress_drop: The stress drop in [bar].
+    :param shear_module: The shear module in [Pa].
+    :param v_s: The shear wave velocity in [km/s].
+    :param depth: The depth in [km].
+    :param distance: The distance in [km].
+
+                sigma = 50.0;
+                mu = 3.0e10;
+                vs = 3.5;
+                r = 1.0;
+                z = 20.0;
+    """
+    # Convert some units.
+    stress_drop *= 1.0E5  # bar -> Pa
+    v_s *= 1000.0  # km/sec -> m/sec
+    distance *= 1000.0  # km -> m
+    depth *= 1000.0  # km -> m
+
+    # Init time array.
+    t = np.linspace(0, duration, duration * sampling_rate)
+
+    # Calculate brune source.
+    brune = 2.0 * variation_signal * stress_drop / shear_module * v_s * \
+        distance / depth * t * np.exp(-2.34 * (v_s / distance) * t)
+    brune = brune.astype("float64")
+
+    # Create a ObsPy Stream object.
+    trace = Trace(data=brune)
+    trace.stats.sampling_rate = sampling_rate
+    trace.stats.network = "SYN"
+    trace.stats.station = "NTHET"
+    trace.stats.location = "IC"
+    trace.stats.channel = "ESZ"
+    return Stream(traces=[trace])
+
+
+def moment_from_low_freq_amplitude(low_freq_amplitude, density, wavespeed,
+    distance, phase):
+    """
+    Calculates the seimic moment M_0 from the low frequency amplitude
+    of a seismic source displacement spectrum. After (Brune, 1970).
+
+    The used radiation pattern is the average radiation pattern over
+    the focal sphere.
+
+    :param low_freq_amplitude: The low frequency amplitude in [m/s].
+    :param density: Rock density in [kg/m^3].
+    :param wavespeed: P-or S-wave speed in [m/s].
+    :param distance: Hypocentral distance in [m].
+    :phase: 'P' or 'S'. Determines the radiation pattern coefficient.
+    :rtype: The Seismic moment in [Nm].
+    """
+    # After Abercrombie and also Tsuboi
+    if phase.lower() == "p":
+        radiation_pattern = 0.52
+    elif phase.lower() == "s":
+        radiation_pattern = 0.63
+    else:
+        msg = "Unknown phase '%s'." % phase
+        raise ValueError(msg)
+    return 4 * np.pi * density * wavespeed ** 3 * distance * \
+        low_freq_amplitude / radiation_pattern
+
+
+def moment_to_moment_magnitude(seismic_moment):
+    return 1.5 * (np.log10(seismic_moment) - 9.1)
+
+
+def source_radius_from_corner_frequency(corner_frequencies, s_wave_vel, phase):
+    """
+    Calculates the source radius from the spectral corner
+    frequency assuming a circular rupture.
+
+    After (Madariaga, 1976).
+
+    :param corner_frequency: Spectral corner frequency in [Hz].
+        Can either be one or a list of three for all three components.
+    :param s_wave_vel: The S-wave velocity.
+    :phase: 'P' or 'S'. Determines the factor k.
+    """
+    try:
+        corner_frequencies = 3 * [float(corner_frequencies)]
+    except:
+        pass
+    if len(corner_frequencies) != 3:
+        msg = "Invalid corner_frequencies: %s" % str(corner_frequencies)
+        raise ValueError(msg)
+
+    # According to (Madariaga, 1976).
+    if phase.lower() == "p":
+        k = 0.32
+    elif phase.lower() == "s":
+        k = 0.21
+    else:
+        msg = "Unknown phase '%s'." % phase
+        raise ValueError(msg)
+    return 3 * k * s_wave_vel / sum(corner_frequencies)
+
+
+def calculate_stress_drop(seismic_moment, source_radius):
+    """
+    Calculate the stress drop after Eshelby, 1957.
+
+    :param seismic_moment: The seismic moment in [Nm].
+    :param source_radius: The source radius assuming circular rupture in [m].
+    :rtype: Stress drop in [Pa].
+    """
+    return (7 * seismic_moment) / (16 * source_radius ** 3)
+
+
+def calculate_source_spectrum(frequencies, omega_0, corner_frequency, Q,
+    traveltime):
+    """
+    After Abercrombie and Boatwright.
+
+    :param frequencies: Input array to perform the calculation on.
+    :param omega_0: Low frequency amplitude in [meter x second].
+    :param corner_frequency: Corner frequency in Hz.
+    :param Q: Quality factor.
+    :param traveltime: Hypocentral traveltime in [s].
+    """
+    num = omega_0 * np.exp(-np.pi * frequencies * traveltime / Q)
+    denom = (1 + (frequencies / corner_frequency) ** 4) ** 0.5
+    return num / denom
+
+
+def fit_spectrum(spectrum, frequencies, traveltime, initial_omega_0,
+    initial_f_c, initial_Q):
+    """
+    """
+    def f(frequencies, omega_0, f_c, Q):
+        return calculate_source_spectrum(frequencies, omega_0, f_c, Q,
+        traveltime)
+    popt, pcov = scipy.optimize.curve_fit(f, frequencies, spectrum, \
+        p0=[initial_omega_0, initial_f_c, initial_Q], maxfev=100000)
+    return popt[0], popt[1], popt[2], pcov[0, 0], pcov[1, 1], pcov[2, 2]

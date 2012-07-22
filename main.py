@@ -38,6 +38,7 @@ def main():
     # Show the main window and bring it to the foreground.
     window.show()
     window.raise_()
+
     os._exit(app.exec_())
 
 

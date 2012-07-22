@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'resources/ui_files/ui_select_event_window.ui'
 #
-# Created: Sun Jul 15 23:33:36 2012
+# Created: Mon Jul 16 01:49:22 2012
 #      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -51,9 +51,9 @@ class Ui_SelectEventWindow(object):
         self.choose_event_button.setSizePolicy(sizePolicy)
         self.choose_event_button.setObjectName(_fromUtf8("choose_event_button"))
         self.gridLayout_2.addWidget(self.choose_event_button, 3, 3, 1, 1)
-        self.pushButton_3 = QtGui.QPushButton(self.centralwidget)
-        self.pushButton_3.setObjectName(_fromUtf8("pushButton_3"))
-        self.gridLayout_2.addWidget(self.pushButton_3, 3, 0, 1, 1)
+        self.cancel_button = QtGui.QPushButton(self.centralwidget)
+        self.cancel_button.setObjectName(_fromUtf8("cancel_button"))
+        self.gridLayout_2.addWidget(self.cancel_button, 3, 0, 1, 1)
         spacerItem = QtGui.QSpacerItem(242, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem, 3, 2, 1, 1)
         spacerItem1 = QtGui.QSpacerItem(599, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -285,7 +285,7 @@ class Ui_SelectEventWindow(object):
     def retranslateUi(self, SelectEventWindow):
         SelectEventWindow.setWindowTitle(QtGui.QApplication.translate("SelectEventWindow", "Select Event", None, QtGui.QApplication.UnicodeUTF8))
         self.choose_event_button.setText(QtGui.QApplication.translate("SelectEventWindow", "Choose event", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton_3.setText(QtGui.QApplication.translate("SelectEventWindow", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
+        self.cancel_button.setText(QtGui.QApplication.translate("SelectEventWindow", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("SelectEventWindow", "Event search", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("SelectEventWindow", "Min. date:", None, QtGui.QApplication.UnicodeUTF8))
         self.starttime.setDisplayFormat(QtGui.QApplication.translate("SelectEventWindow", "MMM dd yyyy HH:mm ", None, QtGui.QApplication.UnicodeUTF8))

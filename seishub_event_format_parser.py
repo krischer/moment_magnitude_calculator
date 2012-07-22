@@ -213,7 +213,7 @@ def __toStationMagnitude(parser, stat_mag_el):
     return mag
 
 
-def __toPick(parser, pick_el):
+def __toPick(parser, pick_el, evaluation_mode):
     """
     """
     pick = Pick()
@@ -225,16 +225,18 @@ def __toPick(parser, pick_el):
                                 location_code=waveform.get("locationCode"))
     pick.time, pick.time_errors = __toTimeQuantity(parser, pick_el, "time")
     pick.phase_hint = parser.xpath2obj('phaseHint', pick_el)
-    pick.onset = parser.xpath2obj('onset', pick_el)
-    if pick.onset is not None:
-        pick.onset = pick.onset.lower()
+    onset = parser.xpath2obj('onset', pick_el)
+    if onset and onset.lower() in ["emergent", "impulsive", "questionable"]:
+        pick.onset = onset.lower
+    # Evaluation mode of a pick is global in the SeisHub Event file format.
+    pick.evaluation_mode = evaluation_mode
     # The polarity needs to be mapped.
     polarity = parser.xpath2obj('polarity', pick_el)
     pol_map_dict = {'up': 'positive', 'positive': 'positive',
                     'down': 'negative', 'negative': 'negative',
                     'undecidable': 'undecidable'}
     if polarity and polarity.lower() in pol_map_dict:
-        pick.pick_polarity = pol_map_dict[polarity.lower()]
+        pick.polarity = pol_map_dict[polarity.lower()]
     # Convert azimuth to backazmith
     azimuth = __toFloatQuantity(parser, pick_el, "azimuth")
     if len(azimuth) == 2 and azimuth[0] and azimuth[1]:
@@ -271,6 +273,7 @@ def readSeishubEventFile(filename):
     # Read the event_type tag.
     pick_method = parser.xpath2obj('event_type/account', parser, str)
     user = parser.xpath2obj('event_type/user', parser, str)
+    global_evaluation_mode = parser.xpath2obj('event_type/value', parser, str)
     # The author will be stored in the CreationInfo object. This will be the
     # creation info of the event as well as on all picks.
     creation_info = {"author": user}
@@ -292,9 +295,9 @@ def readSeishubEventFile(filename):
     for stat_magnitude_el in parser.xpath("stationMagnitude"):
         stat_magnitude = __toStationMagnitude(parser, stat_magnitude_el)
         event.station_magnitudes.append(stat_magnitude)
-    # Parse the picks.
+    # Parse the picks. Pass the global evaluation mode (automatic, manual)
     for pick_el in parser.xpath("pick"):
-        pick = __toPick(parser, pick_el)
+        pick = __toPick(parser, pick_el, global_evaluation_mode)
         event.picks.append(pick)
     # Append the creation info to all picks. And also add the pick_method, e.g.
     # the event_type/account value as the method_id to the picks.

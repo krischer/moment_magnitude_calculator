@@ -13,6 +13,7 @@ from PyQt4 import QtGui, QtCore
 
 import inspect
 from obspy.core import UTCDateTime
+from obspy.core.event import Event
 import os
 import StringIO
 
@@ -31,6 +32,9 @@ class SelectEventWindow(QtGui.QMainWindow):
     # Give the window a closed signal. This is necessary for the faked
     # multi-window application.
     closed = QtCore.pyqtSignal()
+
+    # A signal that is emitted when the "Choose event" button has been clicked.
+    event_chosen = QtCore.pyqtSignal(Event)
 
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
@@ -53,9 +57,9 @@ class SelectEventWindow(QtGui.QMainWindow):
     def init_widgets(self):
         """
         """
-        # Set the timeframe to the last week.
+        # Set the timeframe to the last two week.
         self.ui.starttime.setDateTime( \
-            UTCtoQDateTime(UTCDateTime() - 86000 * 7))
+            UTCtoQDateTime(UTCDateTime() - 86000 * 14))
         self.ui.endtime.setDateTime(UTCtoQDateTime(UTCDateTime()))
         self.ui.webView.setPage(GoogleMapsWebView())
         map_file = os.path.join(os.path.dirname(inspect.getfile( \
@@ -128,6 +132,17 @@ class SelectEventWindow(QtGui.QMainWindow):
         self.ui.search_events_button.clicked.connect(self.search_for_events)
         self.ui.selected_event_load_details.clicked.connect(\
             self.load_event_object)
+        self.ui.choose_event_button.clicked.connect(self.choose_event)
+        self.ui.cancel_button.clicked.connect(self.close)
+
+    def choose_event(self):
+        if self.current_selected_event_object is None:
+            QtGui.QMessageBox.critical(self, "Error",
+                "The event object cannot be found... Please " + \
+                "contact the developer or fix the code yourself...")
+            return
+        self.event_chosen.emit(self.current_selected_event_object)
+        self.close()
 
     def load_event_object(self):
         """
