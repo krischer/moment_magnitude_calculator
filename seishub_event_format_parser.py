@@ -227,7 +227,7 @@ def __toPick(parser, pick_el, evaluation_mode):
     pick.phase_hint = parser.xpath2obj('phaseHint', pick_el)
     onset = parser.xpath2obj('onset', pick_el)
     if onset and onset.lower() in ["emergent", "impulsive", "questionable"]:
-        pick.onset = onset.lower
+        pick.onset = onset.lower()
     # Evaluation mode of a pick is global in the SeisHub Event file format.
     pick.evaluation_mode = evaluation_mode
     # The polarity needs to be mapped.

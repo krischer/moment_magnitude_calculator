@@ -25,9 +25,6 @@ from utils import GoogleMapsWebView, UTCtoQDateTime, QDatetoUTCDateTime, \
 # Import the ui file.
 import ui_select_event_window
 
-SEISHUB_BASE_URL = "http://localhost:7777"
-
-
 class SelectEventWindow(QtGui.QMainWindow):
     # Give the window a closed signal. This is necessary for the faked
     # multi-window application.
@@ -36,12 +33,15 @@ class SelectEventWindow(QtGui.QMainWindow):
     # A signal that is emitted when the "Choose event" button has been clicked.
     event_chosen = QtCore.pyqtSignal(Event)
 
-    def __init__(self):
+    def __init__(self, base_url):
         QtGui.QMainWindow.__init__(self)
+
+        self.base_url = base_url
 
         self.ui = ui_select_event_window.Ui_SelectEventWindow()
         self.ui.setupUi(self)
         center_Qt_window(self)
+
 
         # Init event list and currently selected event.
         self.events = []
@@ -154,7 +154,7 @@ class SelectEventWindow(QtGui.QMainWindow):
                 "contact the developer or fix the code yourself...")
             return
         from obspy.seishub import Client
-        client = Client(base_url=SEISHUB_BASE_URL)
+        client = Client(base_url=self.base_url)
         try:
             resource = client.event.getResource( \
                 self.currently_selected_event["resource_name"])
@@ -208,7 +208,7 @@ class SelectEventWindow(QtGui.QMainWindow):
         model_box.show()
 
         from obspy.seishub import Client
-        c = Client(base_url=SEISHUB_BASE_URL)
+        c = Client(base_url=self.base_url)
         try:
             events = c.event.getList(limit=2500, min_datetime=starttime,
                 max_datetime=endtime, min_latitude=self.north_east[0],

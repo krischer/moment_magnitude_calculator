@@ -93,7 +93,7 @@ def lat_long_to_distance(lat1, lng1, depth1, lat2, lng2, depth2):
     depth = abs(depth2 - depth1)
     # Just choose the first latitude for the longitude calculation.
     one_degree_lng = (math.pi * a * math.cos(math.radians(lat1))) / \
-        (180.0 * (1.0 - e ** 2 * (math.sin(lat1 ** 2) ** 0.5)))
+        (180.0 * (1.0 - e ** 2 * math.sin(math.radians(lat1)) ** 2) ** 0.5)
 
     # Now calculate the distance as a simple euclidean distance.
     # XXX: Approximate value. Calculate one.
@@ -169,6 +169,36 @@ def brune_source(duration, sampling_rate=200, variation_signal=0.625,
     return Stream(traces=[trace])
 
 
+def _three_values(value):
+    """
+    Will always return a list of three values. If value is already a list of
+    three values, nothing will happen. If it is one, a list of three copies
+    will be returned. If it is two, the third value will be the mean of the
+    other two values.
+    """
+    # Try to convert to float and return with 3 copies
+    try:
+        value = 3 * [float(value)]
+        return value
+    except:
+        pass
+    if len(value) == 1:
+        return 3 * value
+    if len(value) > 3:
+        msg = "Only up to three values possible."
+        raise ValueError(msg)
+    # Nothing to be done.
+    if len(value) == 3:
+        return list(value)
+    if len(value) != 2:
+        msg = "This should not happen."
+        raise ValueError(msg)
+    # If this point is reached, value will always contain 2 values.
+    value = list(value)
+    value.append((value[0] + value[1]) / 2.0)
+    return value
+
+
 def moment_from_low_freq_amplitude(low_freq_amplitude, density, wavespeed,
     distance, phase):
     """
@@ -178,13 +208,14 @@ def moment_from_low_freq_amplitude(low_freq_amplitude, density, wavespeed,
     The used radiation pattern is the average radiation pattern over
     the focal sphere.
 
-    :param low_freq_amplitude: The low frequency amplitude in [m/s].
+    :param low_freq_amplitude:  List of 3 low frequency amplitude in [m/s].
     :param density: Rock density in [kg/m^3].
     :param wavespeed: P-or S-wave speed in [m/s].
     :param distance: Hypocentral distance in [m].
     :phase: 'P' or 'S'. Determines the radiation pattern coefficient.
     :rtype: The Seismic moment in [Nm].
     """
+    low_freq_amplitude = _three_values(low_freq_amplitude)
     # After Abercrombie and also Tsuboi
     if phase.lower() == "p":
         radiation_pattern = 0.52
@@ -193,8 +224,11 @@ def moment_from_low_freq_amplitude(low_freq_amplitude, density, wavespeed,
     else:
         msg = "Unknown phase '%s'." % phase
         raise ValueError(msg)
+    omega_0 = np.sqrt(low_freq_amplitude[0] ** 2 + \
+        low_freq_amplitude[1] ** 2 + \
+        low_freq_amplitude[2] ** 2)
     return 4 * np.pi * density * wavespeed ** 3 * distance * \
-        low_freq_amplitude / radiation_pattern
+        omega_0 / radiation_pattern
 
 
 def moment_to_moment_magnitude(seismic_moment):
@@ -213,13 +247,7 @@ def source_radius_from_corner_frequency(corner_frequencies, s_wave_vel, phase):
     :param s_wave_vel: The S-wave velocity.
     :phase: 'P' or 'S'. Determines the factor k.
     """
-    try:
-        corner_frequencies = 3 * [float(corner_frequencies)]
-    except:
-        pass
-    if len(corner_frequencies) != 3:
-        msg = "Invalid corner_frequencies: %s" % str(corner_frequencies)
-        raise ValueError(msg)
+    corner_frequencies = _three_values(corner_frequencies)
 
     # According to (Madariaga, 1976).
     if phase.lower() == "p":
@@ -260,12 +288,12 @@ def calculate_source_spectrum(frequencies, omega_0, corner_frequency, Q,
 
 
 def fit_spectrum(spectrum, frequencies, traveltime, initial_omega_0,
-    initial_f_c, initial_Q):
+    initial_f_c, Q):
     """
     """
-    def f(frequencies, omega_0, f_c, Q):
+    def f(frequencies, omega_0, f_c):
         return calculate_source_spectrum(frequencies, omega_0, f_c, Q,
         traveltime)
     popt, pcov = scipy.optimize.curve_fit(f, frequencies, spectrum, \
-        p0=[initial_omega_0, initial_f_c, initial_Q], maxfev=100000)
-    return popt[0], popt[1], popt[2], pcov[0, 0], pcov[1, 1], pcov[2, 2]
+        p0=[initial_omega_0, initial_f_c], maxfev=100000)
+    return popt[0], popt[1], pcov[0, 0], pcov[1, 1]
