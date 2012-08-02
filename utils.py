@@ -7,7 +7,7 @@ Utility functions and classes.
     Lion Krischer (krischer@geophysik.uni-muenchen.de), 2012
 :license:
     GNU General Public License, Version 3
-    (http://www.gnu.org/copyleft/lesser.html)
+    (http://www.gnu.org/copyleft/gpl.html)
 """
 from PyQt4 import QtCore, QtGui, QtWebKit
 

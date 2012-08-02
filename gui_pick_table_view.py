@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+:copyright:
+    Lion Krischer (krischer@geophysik.uni-muenchen.de), 2012
+:license:
+    GNU General Public License, Version 3
+    (http://www.gnu.org/copyleft/gpl.html)
+"""
 from PyQt4 import QtCore, QtGui
 
 from utils import lat_long_to_distance

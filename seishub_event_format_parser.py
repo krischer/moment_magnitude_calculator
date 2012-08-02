@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Seishub event file parser.
+
+:copyright:
+    Lion Krischer (krischer@geophysik.uni-muenchen.de), 2012
+:license:
+    GNU Lesser General Public License, Version 3
+    (http://www.gnu.org/copyleft/lesser.html)
+"""
 from obspy.core import UTCDateTime
 from obspy.core.event import Catalog, Event, Origin, \
     Magnitude, StationMagnitude, Comment, Pick, WaveformStreamID, \

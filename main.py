@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-DESCRIPTION
+Launching the Moment Magnitude Calculator.
 
 :copyright:
     Lion Krischer (krischer@geophysik.uni-muenchen.de), 2012
