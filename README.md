@@ -18,6 +18,7 @@ It currently has no setup.py, so simply check it out and run it
     python main.py
 
 ### Short Usage Guide
-![](github.com/krischer/moment_magnitude_calculator/raw/master/img/moment_mag_0.png)
-![](github.com/krischer/moment_magnitude_calculator/raw/master/img/moment_mag_1.png)
-![](github.com/krischer/moment_magnitude_calculator/raw/master/img/moment_mag_2.png)
+![Screenshot 1](github.com/krischer/moment_magnitude_calculator/raw/master/img/moment_mag_0.png)
+![Screenshot 1](https://raw.github.com/krischer/moment_magnitude_calculator/master/img/moment_mag_0.png)
+![Screenshot 2](github.com/krischer/moment_magnitude_calculator/raw/master/img/moment_mag_1.png)
+![Screenshot 3](github.com/krischer/moment_magnitude_calculator/raw/master/img/moment_mag_2.png)
