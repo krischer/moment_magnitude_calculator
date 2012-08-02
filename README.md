@@ -60,8 +60,6 @@ Now you can estimate the source parameters and the moment magnitudes at as many 
 3. The spectrum will appear in the lower left corner. The grey lines denote 95% jackknife confidence intervals.
 4. An automatic fit of the theoretical source spectrum will be calculated. You can manually adjust it.
 5. If you are satisfied, press **Accept** and the fitted parameters will show up on the right hand side.
-
-** Rinse and repeat 1 to 5 until the parameters have been estimated at enough stations. **
-
-6. Adapt the density and wave velocities on the right hand side to the given problem if necessary.
-7. Click the **Write QuakeML** button to save the event as a QuakeML file to the filesystem.
+6. Rinse and repeat 1 to 5 until the parameters have been estimated at enough stations.
+7. Adapt the density and wave velocities on the right hand side to the given problem if necessary.
+8. Click the **Write QuakeML** button to save the event as a QuakeML file to the filesystem.
