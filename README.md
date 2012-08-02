@@ -13,7 +13,7 @@
 
 ### Installing/Running
 
-It currently has no setup.py, so simply check it out and run it
+It currently has no setup.py, so simply check it out and run it:
 
 ```
 git clone git://github.com/krischer/moment_magnitude_calculator.git
@@ -28,7 +28,7 @@ python main.py
 Upon running main.py a window should pop up. Two things need to be done here:
 
 1. Enter the correct SeisHub server in the top right corner.
-2. Click the **Load event** button to choose an event
+2. Click the **Load event** button to choose an event.
 
 Additionally you can specify how many buffer seconds of data to load around each pick; also in the top right corner.
 
@@ -51,7 +51,7 @@ Now the data will be downloaded and you will be returned to the previous window.
 
 ---
 
-![Screenshot 3](https://raw.github.com/krischer/moment_magnitude_calculator/master/img/moment_mag_3.png)
+![Screenshot 3](https://raw.github.com/krischer/moment_magnitude_calculator/master/img/moment_mag_2.png)
 
 Now you can estimate the source parameters and the moment magnitudes at as many stations as you desire. The estimate will usually be the most reliable if done for all stations, phases and channels.
 
