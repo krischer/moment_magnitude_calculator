@@ -433,8 +433,9 @@ class MainWindow(QtGui.QMainWindow):
             for trace in st:
                 # Convert to ground motion.
                 trace.stats.paz["zeros"].append(0 + 0j)
-                trace.detrend()
-                trace.simulate(paz_remove=trace.stats.paz, water_level=10.0)
+            st.merge(-1)
+            st.detrend()
+            st.simulate(paz_remove="self", water_level=10.0)
             pick.data = st
         # Finish the progress dialog.
         progress_dialog.setValue(len(event.picks))
