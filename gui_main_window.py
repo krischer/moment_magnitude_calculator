@@ -421,8 +421,7 @@ class MainWindow(QtGui.QMainWindow):
                         float(self.ui.buffer_seconds.value()),
                     endtime=pick.time + \
                         float(self.ui.buffer_seconds.value()),
-                    getPAZ=True,
-                    getCoordinates=True)
+                    getPAZ=True, getCoordinates=True, apply_filter=True)
             except Exception, e:
                 error_type_str = e.__class__.__name__
                 print "Problem while downloading waveform data:", \
