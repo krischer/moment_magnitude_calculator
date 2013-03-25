@@ -24,12 +24,6 @@ class GoogleMapsWebView(QtWebKit.QWebPage):
     Subclass QWebPage to implement a custom user agent string and be able to
     debug Javascript.
     """
-    def userAgentForUrl(self, *args, **kwargs):
-        # Dirty hack required to not get the multitouch version of google
-        # maps...
-        # See http://qt-project.org/forums/viewthread/1643
-        return "Chrome/1.0"
-
     def javaScriptConsoleMessage(self, msg, line, source):
         """
         Print all Javascript Console Messages as a red string.
