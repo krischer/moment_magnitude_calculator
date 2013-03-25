@@ -25,6 +25,7 @@ from utils import GoogleMapsWebView, UTCtoQDateTime, QDatetoUTCDateTime, \
 # Import the ui file.
 import ui_select_event_window
 
+
 class SelectEventWindow(QtGui.QMainWindow):
     # Give the window a closed signal. This is necessary for the faked
     # multi-window application.
@@ -42,7 +43,6 @@ class SelectEventWindow(QtGui.QMainWindow):
         self.ui.setupUi(self)
         center_Qt_window(self)
 
-
         # Init event list and currently selected event.
         self.events = []
         self.currently_selected_event = None
@@ -58,14 +58,15 @@ class SelectEventWindow(QtGui.QMainWindow):
         """
         """
         # Set the timeframe to the last two week.
-        self.ui.starttime.setDateTime( \
+        self.ui.starttime.setDateTime(
             UTCtoQDateTime(UTCDateTime() - 86000 * 14))
         self.ui.endtime.setDateTime(UTCtoQDateTime(UTCDateTime()))
         self.ui.webView.setPage(GoogleMapsWebView())
-        map_file = os.path.join(os.path.dirname(inspect.getfile( \
-            inspect.currentframe())), "resources", "html_resources",
-            "map.html")
-        self.ui.webView.load(QtCore.QUrl(map_file))
+        map_file = os.path.abspath(os.path.join(os.path.dirname(
+            inspect.getfile(inspect.currentframe())), "resources",
+            "html_resources", "map.html"))
+
+        self.ui.webView.load(QtCore.QUrl.fromLocalFile(map_file))
 
         self.ui.webView.page().mainFrame().addToJavaScriptWindowObject("pyObj",
                 self)
