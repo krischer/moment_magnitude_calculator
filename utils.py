@@ -226,7 +226,7 @@ def moment_from_low_freq_amplitude(low_freq_amplitude, density, wavespeed,
 
 
 def moment_to_moment_magnitude(seismic_moment):
-    return 1.5 * (np.log10(seismic_moment) - 9.1)
+    return 2.0 / 3 * (np.log10(seismic_moment) - 9.1)
 
 
 def source_radius_from_corner_frequency(corner_frequencies, s_wave_vel, phase):
