@@ -324,10 +324,16 @@ def plot_ml_vs_mw(catalog):
         edgecolor="black")
 
     # Plot the Ml=Mw line.
-    plt.plot(x_values, x_values, label="$Mw=Ml$", color="blue", alpha=0.8)
+    plt.plot(x_values, x_values, label="$Mw=Ml$", color="k", alpha=0.8)
     plt.plot(x_values, 0.67 + 0.56 * x_values + 0.046 * x_values ** 2,
-        label="$Mw=0.67 + 0.56Ml + 0.046Ml^2$", color="green")
-    plt.plot(x_values, fit_curve, color="orange",
+        label="$Mw=0.67 + 0.56Ml + 0.046Ml^2 (gruenthal etal 2003)$", color="green", ls="--")
+    plt.plot(x_values, 0.53 + 0.646 * x_values + 0.0376 * x_values ** 2,
+        label="$Mw=0.53 + 0.646Ml + 0.0376Ml^2 (gruenthal etal 2009)$", color="green")
+    plt.plot(x_values, 0.594 * x_values + 0.985,
+        label="$Mw=0.985 + 0.594Ml (goertz-allmann etal 2011)$", color="orange")
+    plt.plot(x_values, (x_values + 1.21) / 1.58,
+        label="$Mw=(Ml + 1.21) / 1.58 (bethmann etal 2011)$", color="red")
+    plt.plot(x_values, fit_curve, color="blue",
         label="$Data$ $fit$ $with$ $Mw=%.2f + %.2fMl + %.3fMl^2$" % (a, b, c))
     # Set limits and labels.
     plt.xlim(-2, 4)
@@ -336,7 +342,7 @@ def plot_ml_vs_mw(catalog):
     plt.ylabel("Mw", fontsize="x-large")
     # Show grid and legend.
     plt.grid()
-    plt.legend()
+    plt.legend(loc="lower right")
     plt.savefig("moment_mag_automatic.pdf")
 
 def plot_source_radius(cat):
