@@ -38,7 +38,7 @@ import matplotlib.pylab as plt
 import mtspec
 import numpy as np
 from obspy import read, Stream
-from obspy.core.event import readEvents, Comment, Magnitude
+from obspy.core.event import readEvents, Comment, Magnitude, Catalog
 from obspy.xseed import Parser
 import progressbar
 import scipy
@@ -62,8 +62,8 @@ QUALITY_FACTOR = 1000
 
 # Specifiy where to find the files. One large event file contain all events and
 # an arbitrary number of waveform and station information files.
-EVENT_FILE = "events.xml"
-STATION_FILES = glob.glob("station/*")
+EVENT_FILES = glob.glob("events/*")
+STATION_FILES = glob.glob("stations/*")
 WAVEFORM_FILES = glob.glob("waveforms/*")
 
 # Where to write the output file to.
@@ -437,7 +437,9 @@ if __name__ == "__main__":
         return st
 
     print "Reading all events."
-    cat = readEvents(EVENT_FILE)
+    cat = Catalog()
+    for filename in EVENT_FILES:
+        cat += readEvents(filename)
     print "Done reading all events."
 
     # Will edit the Catalog object inplace.
