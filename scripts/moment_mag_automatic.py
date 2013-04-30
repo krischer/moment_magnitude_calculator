@@ -33,19 +33,17 @@ Requirements:
     (http://www.gnu.org/copyleft/lesser.html)
 """
 import colorama
-import copy
 import glob
 import matplotlib.pylab as plt
 import mtspec
 import numpy as np
-from obspy.core import read
+from obspy import read, Stream
 from obspy.core.event import readEvents, Comment, Magnitude
 from obspy.xseed import Parser
-import os
 import progressbar
 import scipy
 import scipy.optimize
-import sys
+import warnings
 
 # Rock density in km/m^3.
 DENSITY = 2700.0
@@ -64,9 +62,9 @@ QUALITY_FACTOR = 1000
 
 # Specifiy where to find the files. One large event file contain all events and
 # an arbitrary number of waveform and station information files.
-EVENT_FILE = "relocated_events.xml"
-STATION_FILES = glob.glob("station/*.xml")
-WAVEFORM_FILES = glob.glob("waveforms/*.xml")
+EVENT_FILE = "events.xml"
+STATION_FILES = glob.glob("station/*")
+WAVEFORM_FILES = glob.glob("waveforms/*")
 
 # Where to write the output file to.
 OUTPUT_FILE = "events_with_moment_magnitudes.xml"
@@ -162,9 +160,7 @@ def calculate_moment_magnitudes(cat, output_file):
             distance = (pick.time - origin_time) * velocity
             if distance <= 0.0:
                 continue
-            station_id = "%s.%s" % (pick.waveform_id.network_code,
-                pick.waveform_id.station_code)
-            stream = get_corresponding_stream(station_id, pick.time)
+            stream = get_corresponding_stream(pick.waveform_id, pick.time)
             if stream is None or len(stream) != 3:
                 continue
             omegas = []
@@ -341,7 +337,7 @@ def plot_ml_vs_mw(catalog):
     # Show grid and legend.
     plt.grid()
     plt.legend()
-    plt.savefig("/Users/lion/Desktop/MomentMag.pdf")
+    plt.savefig("moment_mag_automatic.pdf")
 
 def plot_source_radius(cat):
     mw = []
@@ -379,20 +375,17 @@ if __name__ == "__main__":
         ' ', progressbar.Bar()]
     pbar = progressbar.ProgressBar(widgets=widgets,
         maxval=len(STATION_FILES)).start()
-    paz_index = {}
+    parsers = {}
     # Read all waveform files.
     for _i, xseed in enumerate(STATION_FILES):
         pbar.update(_i)
         parser = Parser(xseed)
-        station = parser.stations[0][0].station_call_letters
-        channels = ["EHE", "EHN", "EHZ"]
-        for channel in channels:
-            seed_id = "BW.%s..%s" % (station, channel)
-            try:
-                paz = parser.getPAZ(seed_id)
-            except:
-                continue
-            paz_index[seed_id] = paz
+        channels = [c['channel_id'] for c in parser.getInventory()['channels']]
+        parsers_ = dict.fromkeys(channels, parser)
+        if any([k in parsers for k in parsers_.keys()]):
+            msg = "Channel(s) defined in more than one metadata file."
+            warnings.warn(msg)
+        parsers.update(parsers_)
     pbar.finish()
 
     # Parse all waveform files.
@@ -416,7 +409,7 @@ if __name__ == "__main__":
 
     # Define it inplace to create a closure for the waveform_index dictionary
     # because I am too lazy to fix the global variable issue right now...
-    def get_corresponding_stream(station_id, pick_time, padding=1.0):
+    def get_corresponding_stream(waveform_id, pick_time, padding=1.0):
         """
         Helper function to find a requested waveform in the previously created
         waveform_index file.
@@ -424,28 +417,24 @@ if __name__ == "__main__":
 
         Returns None if the file could not be found.
         """
-        trace_id = "%s..EHZ" % station_id
-        if trace_id not in waveform_index:
-            return None
+        trace_ids = [waveform_id.getSEEDString()[:-1] + comp for comp in "ZNE"]
+        st = Stream()
         start = pick_time - padding
         end = pick_time + padding
-        for waveform in waveform_index[trace_id]:
-            if waveform["starttime"] > start:
-                continue
-            if waveform["endtime"] < end:
-                continue
-            st = read(waveform["filename"])
-            for trace in st:
-                try:
-                    paz = copy.deepcopy(paz_index[trace.id])
-                except:
-                    return None
-                # PAZ in SEED correct to m/s. Add a zero to correct to m.
-                paz["zeros"].append(0 + 0j)
-                trace.detrend()
-                trace.simulate(paz_remove=paz, water_level=WATERLEVEL)
-            return st
-        return None
+        for trace_id in trace_ids:
+            for waveform in waveform_index.get(trace_id, []):
+                if waveform["starttime"] > start:
+                    continue
+                if waveform["endtime"] < end:
+                    continue
+                st += read(waveform["filename"]).select(id=trace_id)
+        for trace in st:
+            paz = parsers[trace.id].getPAZ(trace.id, start)
+            # PAZ in SEED correct to m/s. Add a zero to correct to m.
+            paz["zeros"].append(0 + 0j)
+            trace.detrend()
+            trace.simulate(paz_remove=paz, water_level=WATERLEVEL)
+        return st
 
     print "Reading all events."
     cat = readEvents(EVENT_FILE)
