@@ -139,6 +139,12 @@ def calculate_moment_magnitudes(cat, output_file):
     Mws_std = []
 
     for event in cat:
+        if not event.origins:
+            print "No origin for event %s" % event.resource_id
+            continue
+        if not event.magnitudes:
+            print "No magnitude for event %s" % event.resource_id
+            continue
         origin_time = event.origins[0].time
         local_magnitude = event.magnitudes[0].mag
         #if local_magnitude < 1.0:
