@@ -54,6 +54,7 @@ V_S = V_P / 1.73
 # spectra.
 TIME_BEFORE_PICK = 0.2
 TIME_AFTER_PICK = 0.8
+PADDING = 20
 WATERLEVEL = 10.0
 # Fixed quality factor. Very unstable inversion for it. Has almost no influence
 # on the final seismic moment estimations but has some influence on the corner
@@ -160,7 +161,8 @@ def calculate_moment_magnitudes(cat, output_file):
             distance = (pick.time - origin_time) * velocity
             if distance <= 0.0:
                 continue
-            stream = get_corresponding_stream(pick.waveform_id, pick.time)
+            stream = get_corresponding_stream(pick.waveform_id, pick.time,
+                                              PADDING)
             if stream is None or len(stream) != 3:
                 continue
             omegas = []
