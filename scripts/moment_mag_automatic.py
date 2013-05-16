@@ -282,8 +282,11 @@ def fit_moment_magnitude_relation_curve(Mls, Mws, Mw_stds):
     def y(x, a, b, c):
         return a + b * x + c * x ** 2
     # Use a straight line as starting point.
-    popt, pcov = scipy.optimize.curve_fit(y, Mls, Mws, \
-        p0=[0.0, 1.0, 0.0], sigma=Mw_stds, maxfev=100000)
+    Mls = np.ma.masked_invalid(Mls)
+    Mws = np.ma.masked_invalid(Mws)
+    inds = ~(Mls.mask | Mws.mask | np.isnan(Mw_stds) | (Mw_stds <= 0))
+    popt, pcov = scipy.optimize.curve_fit(y, Mls[inds], Mws[inds], \
+        p0=[0.0, 1.0, 0.0], sigma=Mw_stds[inds], maxfev=100000)
     return popt[0], popt[1], popt[2]
 
 
