@@ -256,13 +256,14 @@ def calculate_moment_magnitudes(cat, output_file):
         mag.mag_errors.uncertainty = Mw_std
         mag.magnitude_type = "Mw"
         mag.origin_id = event.origins[0].resource_id
-        mag.method_id = "Custom fit to Boatwright spectrum"
+        mag.method_id = "smi:com.github/krischer/moment_magnitude_calculator/automatic/1"
         mag.station_count = len(moments)
         mag.evaluation_mode = "automatic"
         mag.evaluation_status = "preliminary"
         mag.comments.append(Comment( \
             "Seismic Moment=%e Nm; standard deviation=%e" % (moment,
             moment_std)))
+        mag.comments.append(Comment("Custom fit to Boatwright spectrum"))
         if source_radius > 0 and source_radius_std < source_radius:
             mag.comments.append(Comment( \
                 "Source radius=%.2fm; standard deviation=%.2f" % (source_radius,
